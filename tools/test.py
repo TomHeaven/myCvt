@@ -138,7 +138,7 @@ def main():
 
     writer_dict['writer'].close()
     logging.info('=> finish testing')
-
+    #comm.destory_process_group()
 
 if __name__ == '__main__':
     main()

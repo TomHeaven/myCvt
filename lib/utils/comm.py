@@ -55,6 +55,14 @@ class Comm(object):
         if self.world_size == 1:
             return
         dist.barrier()
+    
+    def destory_process_group(self):
+        """Terminate process group
+        """
+        #dist.barrier()
+        #if self.is_main_process():
+        #    dist.destroy_process_group()
+        dist.destroy_process_group()
 
 
 comm = Comm()

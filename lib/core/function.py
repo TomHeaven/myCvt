@@ -157,10 +157,10 @@ def test(config, val_loader, model, criterion, output_dir, tb_log_dir,
         real_top1 = real_labels.get_accuracy(k=1)
         real_top5 = real_labels.get_accuracy(k=5)
         msg = '=> TEST using Reassessed labels:\t' \
-            'Error@1 {error1:.3f}%\t' \
-            'Error@5 {error5:.3f}%\t' \
-            'Accuracy@1 {top1:.3f}%\t' \
-            'Accuracy@5 {top5:.3f}%\t'.format(
+            'Error@1 {error1:.3f}% ' \
+            'Error@5 {error5:.3f}% ' \
+            'Accuracy@1 {top1:.3f}% ' \
+            'Accuracy@5 {top5:.3f}%'.format(
                 top1=real_top1,
                 top5=real_top5,
                 error1=100-real_top1,

@@ -1,6 +1,7 @@
 from functools import partial
 from itertools import repeat
-from torch._six import container_abcs
+#from torch._six import container_abcs
+import collections.abc as container_abcs
 
 import logging
 import os
@@ -18,6 +19,7 @@ from timm.models.layers import DropPath, trunc_normal_
 
 from .registry import register_model
 
+DEBUG = True
 
 # From PyTorch internals
 def _ntuple(n):
@@ -444,10 +446,10 @@ class VisionTransformer(nn.Module):
 
     def _init_weights_trunc_normal(self, m):
         if isinstance(m, nn.Linear):
-            logging.info('=> init weight of Linear from trunc norm')
+            #logging.info('=> init weight of Linear from trunc norm')
             trunc_normal_(m.weight, std=0.02)
             if m.bias is not None:
-                logging.info('=> init bias of Linear to zeros')
+                #logging.info('=> init bias of Linear to zeros')
                 nn.init.constant_(m.bias, 0)
         elif isinstance(m, (nn.LayerNorm, nn.BatchNorm2d)):
             nn.init.constant_(m.bias, 0)
@@ -455,10 +457,10 @@ class VisionTransformer(nn.Module):
 
     def _init_weights_xavier(self, m):
         if isinstance(m, nn.Linear):
-            logging.info('=> init weight of Linear from xavier uniform')
+            #logging.info('=> init weight of Linear from xavier uniform')
             nn.init.xavier_uniform_(m.weight)
             if m.bias is not None:
-                logging.info('=> init bias of Linear to zeros')
+                #logging.info('=> init bias of Linear to zeros')
                 nn.init.constant_(m.bias, 0)
         elif isinstance(m, (nn.LayerNorm, nn.BatchNorm2d)):
             nn.init.constant_(m.bias, 0)
@@ -467,8 +469,13 @@ class VisionTransformer(nn.Module):
     def forward(self, x):
         x = self.patch_embed(x)
         B, C, H, W = x.size()
+        if DEBUG:
+            print("----VisionTransformer.foward():")
+            print('    x', x.size())
 
         x = rearrange(x, 'b c h w -> b (h w) c')
+        if DEBUG:
+            print('    x (rearrange)', x.size())
 
         cls_tokens = None
         if self.cls_token is not None:
@@ -476,7 +483,7 @@ class VisionTransformer(nn.Module):
             cls_tokens = self.cls_token.expand(B, -1, -1)
             x = torch.cat((cls_tokens, x), dim=1)
 
-        x = self.pos_drop(x)
+        x = self.pos_drop(x) # nn.dropout
 
         for i, blk in enumerate(self.blocks):
             x = blk(x, H, W)
