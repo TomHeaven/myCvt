@@ -62,7 +62,7 @@ def init_distributed(args):
         print("=> init process group start")
         torch.cuda.set_device(args.local_rank)
         torch.distributed.init_process_group(
-            backend="gloo", init_method="env://",
+            backend="nccl", init_method="env://",
             timeout=timedelta(minutes=180))
         comm.local_rank = args.local_rank
         print("=> init process group end")

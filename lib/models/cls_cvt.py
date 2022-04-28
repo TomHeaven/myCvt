@@ -19,7 +19,7 @@ from timm.models.layers import DropPath, trunc_normal_
 
 from .registry import register_model
 
-DEBUG = True
+DEBUG = False
 
 # From PyTorch internals
 def _ntuple(n):
