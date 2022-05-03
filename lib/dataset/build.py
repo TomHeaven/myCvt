@@ -16,7 +16,7 @@ from .samplers import RASampler
 
 def build_dataset(cfg, is_train):
     dataset = None
-    if 'imagenet' in cfg.DATASET.DATASET:
+    if 'imagenet' or 'cifar100' in cfg.DATASET.DATASET:
         dataset = _build_imagenet_dataset(cfg, is_train)
     else:
         raise ValueError('Unkown dataset: {}'.format(cfg.DATASET.DATASET))

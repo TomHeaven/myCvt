@@ -2,6 +2,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+# To fix "OSError: broken data stream when reading image file" in case input image corrupted.
+from PIL import Image, ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+
 import argparse
 import logging
 import os
@@ -198,10 +202,10 @@ def main():
         model, args.distributed, final_output_dir, 'final_state.pth'
     )
 
-    if config.SWA.ENABLED and comm.is_main_process():
-        save_model_on_master(
-             args.distributed, final_output_dir, 'swa_state.pth'
-        )
+    #if config.SWA.ENABLED and comm.is_main_process():
+    #    save_model_on_master(
+    #         args.distributed, final_output_dir, 'swa_state.pth'
+    #    )
 
     writer_dict['writer'].close()
     logging.info('=> finish training')

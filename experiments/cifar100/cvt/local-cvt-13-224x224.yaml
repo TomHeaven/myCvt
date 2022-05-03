@@ -5,7 +5,7 @@ AMP:
   ENABLED: true
 
 MODEL:
-  NAME: cls_cvt
+  NAME: cls_local_cvt
   SPEC:
     INIT: 'trunc_norm'
     NUM_STAGES: 3
