@@ -50,7 +50,7 @@ CUDNN:
   DETERMINISTIC: false
   ENABLED: true
 DATASET:
-  DATASET: 'imagenet'
+  DATASET: 'cifar100'
   DATA_FORMAT: 'png'
   ROOT: 'DATASET/cifar100/'
   TEST_SET: 'test'
