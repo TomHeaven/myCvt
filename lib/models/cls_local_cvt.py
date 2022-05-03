@@ -222,8 +222,8 @@ class TanFeedForward(nn.Module):
         self.conv = nn.Sequential(*layers)
 
     def forward(self, x):
-        print('x', x.shape)
-        print('conv(x)', self.conv(x).shape)
+        #print('x', x.shape)
+        #print('conv(x)', self.conv(x).shape)
         x = x + self.conv(x)
         return x
 
