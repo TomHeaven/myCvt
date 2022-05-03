@@ -52,7 +52,7 @@ CUDNN:
 DATASET:
   DATASET: 'imagenet'
   DATA_FORMAT: 'jpg'
-  ROOT: 'DATASET/imagenet/'
+  ROOT: 'dataset/imagenet/'
   TEST_SET: 'val'
   TRAIN_SET: 'train'
 TEST:
@@ -61,7 +61,7 @@ TEST:
   MODEL_FILE: ''
   INTERPOLATION: 3
 TRAIN:
-  BATCH_SIZE_PER_GPU: 256
+  BATCH_SIZE_PER_GPU: 192 # 256
   LR: 0.00025
   IMAGE_SIZE: [224, 224]
   BEGIN_EPOCH: 0

@@ -44,7 +44,7 @@ def prepare_val_dataset(val_dir, gt_txt_path, meta_path, out_dir):
 
 
 if __name__ == '__main__':
-    val_dir = '/Volumes/Data/实验数据/ILSVRC2012/ILSVRC2012_img_val'
+    val_dir = '/home/tomheaven/实验/ILSVRC2012/ILSVRC2012_img_val'
     gt_txt_path = 'dataset/imagenet/ILSVRC2012_validation_ground_truth.txt'
     meta_path = 'dataset/imagenet/meta.mat'
     out_dir = 'dataset/imagenet/val'

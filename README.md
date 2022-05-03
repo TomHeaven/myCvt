@@ -97,6 +97,7 @@ Options:
 
 ``` sh
 bash run.sh -g 8 -t train --cfg experiments/imagenet/cvt/cvt-13-224x224.yaml
+# nohup bash run.sh -g 4 -t train --cfg experiments/imagenet/cvt/cvt-13-224x224.yaml > train.log &
 ```
 
 You can also modify the config paramters by the command line. For example, if you want to change the lr rate to 0.1, you can run the command:
