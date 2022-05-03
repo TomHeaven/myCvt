@@ -189,9 +189,41 @@ class LocalityFeedForward(nn.Module):
             nn.Conv2d(hidden_dim, out_dim, 1, 1, 0, bias=False),
             nn.BatchNorm2d(out_dim)
         ])
+        #print('layers', layers)
         self.conv = nn.Sequential(*layers)
 
     def forward(self, x):
+        x = x + self.conv(x)
+        return x
+    
+class TanFeedForward(nn.Module):
+    def __init__(self, in_dim, out_dim, kernel_size, expand_ratio=2.):
+        """
+        :param in_dim: the input dimension
+        :param out_dim: the output dimension. The input and output dimension should be the same.
+        :param kernel_size: kernel size of the 2D convolution.
+        :param expand_ratio: expansion ratio of the hidden dimension.
+        """
+        super(TanFeedForward, self).__init__()
+        hidden_dim = int(in_dim * expand_ratio)
+
+        layers = []
+        # the first linear layer is replaced by 1x1 convolution.
+        layers.extend([
+            nn.Conv2d(in_dim, hidden_dim, kernel_size, bias=False),
+            nn.BatchNorm2d(hidden_dim),
+            nn.ReLU(inplace=True)])
+        # the second linear layer is replaced by 1x1 convolution.
+        layers.extend([
+            nn.ConvTranspose2d(hidden_dim, out_dim, kernel_size, bias=False),
+            nn.BatchNorm2d(out_dim)
+        ])
+        #print('layers', layers)
+        self.conv = nn.Sequential(*layers)
+
+    def forward(self, x):
+        print('x', x.shape)
+        print('conv(x)', self.conv(x).shape)
         x = x + self.conv(x)
         return x
 
@@ -447,18 +479,15 @@ class Block(nn.Module):
             if drop_path > 0. else nn.Identity()
         self.norm2 = norm_layer(dim_out)
 
-        dim_mlp_hidden = int(dim_out * mlp_ratio)
+        #dim_mlp_hidden = int(dim_out * mlp_ratio)
         # self.mlp = Mlp(
         #     in_features=dim_out,
         #     hidden_features=dim_mlp_hidden,
         #     act_layer=act_layer,
         #     drop=drop
         # )
-        act='hs+se'
-        reduction=4
-        wo_dp_conv=False
-        dp_first=False
-        self.conv = LocalityFeedForward(dim_out, dim_out, 1, mlp_ratio, act, reduction, wo_dp_conv, dp_first)
+        kernel_size = 3
+        self.conv = TanFeedForward(dim_out, dim_out, kernel_size, mlp_ratio)
 
     def forward(self, x, h, w):
         res = x
@@ -468,7 +497,7 @@ class Block(nn.Module):
         x = res + self.drop_path(attn) # [B, 3136, 64]
         x = self.norm2(x)
 
-        batch_size, num_token, embed_dim = x.shape      # (B, 197, dim)
+        batch_size, num_token, embed_dim = x.shape 
         with_cls_token = num_token == h*w + 1
         if with_cls_token:
             cls_token, x = torch.split(x, [1, num_token - 1], dim=1) 
