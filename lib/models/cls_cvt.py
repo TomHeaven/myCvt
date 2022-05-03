@@ -17,9 +17,12 @@ from einops.layers.torch import Rearrange
 
 from timm.models.layers import DropPath, trunc_normal_
 
-from .registry import register_model
+try:
+    from .registry import register_model
+except:
+    from lib.models.registry import register_model
 
-DEBUG = True
+DEBUG = False
 
 # From PyTorch internals
 def _ntuple(n):
@@ -181,6 +184,12 @@ class Attention(nn.Module):
             v = self.conv_proj_v(x)
         else:
             v = rearrange(x, 'b c h w -> b (h w) c')
+            
+        if DEBUG:
+            print('----Attention.forward_conv():')
+            print('    q', q.shape, 'k', k.shape, 'v', v.shape)
+            print('    self.with_cls_token', self.with_cls_token)
+            # first: q torch.Size([7, 3136, 64]) k torch.Size([7, 784, 64]) v torch.Size([7, 784, 64])
 
         if self.with_cls_token:
             q = torch.cat((cls_token, q), dim=1)
@@ -196,20 +205,25 @@ class Attention(nn.Module):
             or self.conv_proj_v is not None
         ):
             q, k, v = self.forward_conv(x, h, w)
-
+        # 线性投影得到q，k，v，三级VisionTransformer的特征维度分别为 [64->64, 192->192, 384->384]
         q = rearrange(self.proj_q(q), 'b t (h d) -> b h t d', h=self.num_heads)
         k = rearrange(self.proj_k(k), 'b t (h d) -> b h t d', h=self.num_heads)
         v = rearrange(self.proj_v(v), 'b t (h d) -> b h t d', h=self.num_heads)
 
         attn_score = torch.einsum('bhlk,bhtk->bhlt', [q, k]) * self.scale
         attn = F.softmax(attn_score, dim=-1)
-        attn = self.attn_drop(attn)
+        attn = self.attn_drop(attn) # nn.Dropout
+        
+        if DEBUG:
+            print('----Attention.forward():')
+            print('    x', x.shape)
+            print('    attn', attn.shape)
 
         x = torch.einsum('bhlt,bhtv->bhlv', [attn, v])
         x = rearrange(x, 'b h t d -> b t (h d)')
-
+        # 再次线性投影，投影特征维度同上。
         x = self.proj(x)
-        x = self.proj_drop(x)
+        x = self.proj_drop(x) # nn.Dropout
 
         return x
 
@@ -421,7 +435,7 @@ class VisionTransformer(nn.Module):
         for j in range(depth):
             blocks.append(
                 Block(
-                    dim_in=embed_dim,
+                    dim_in=embed_dim, # 64, 192, 384
                     dim_out=embed_dim,
                     num_heads=num_heads,
                     mlp_ratio=mlp_ratio,
@@ -472,16 +486,21 @@ class VisionTransformer(nn.Module):
         if DEBUG:
             print("----VisionTransformer.foward():")
             print('    x', x.size())
+            # torch.Size([7, 64, 56, 56])
 
         x = rearrange(x, 'b c h w -> b (h w) c')
         if DEBUG:
             print('    x (rearrange)', x.size())
+            # torch.Size([7, 3136, 64])
 
         cls_tokens = None
         if self.cls_token is not None:
             # stole cls_tokens impl from Phil Wang, thanks
             cls_tokens = self.cls_token.expand(B, -1, -1)
             x = torch.cat((cls_tokens, x), dim=1)
+            
+            if DEBUG:
+                print('    cls_tokens', cls_tokens.size())
 
         x = self.pos_drop(x) # nn.dropout
 
@@ -491,6 +510,8 @@ class VisionTransformer(nn.Module):
         if self.cls_token is not None:
             cls_tokens, x = torch.split(x, [1, H*W], 1)
         x = rearrange(x, 'b (h w) c -> b c h w', h=H, w=W)
+        if DEBUG:
+            print('    x (final rearrange)', x.size())
 
         return x, cls_tokens
 
@@ -619,7 +640,11 @@ class ConvolutionalVisionTransformer(nn.Module):
         else:
             x = rearrange(x, 'b c h w -> b (h w) c')
             x = self.norm(x)
-            x = torch.mean(x, dim=1)
+            x = torch.mean(x, dim=1) # 如果没有cls_token，就用所有的tokens求取平均值得到bxc的特征；这个实际没有启用。
+        
+        if DEBUG:
+            print('----ConvolutionalVisionTransformer.forward():')
+            print('    x', x.shape, 'self.cls_token', self.cls_token)
 
         return x
 
@@ -650,3 +675,35 @@ def get_cls_model(config, **kwargs):
         )
 
     return msvit
+
+if __name__ == '__main__':
+    from lib.config import update_config, config
+    from lib.models import build_model
+    import argparse
+    def parse_args():
+        parser = argparse.ArgumentParser(
+            description='Test classification network')
+
+        parser.add_argument('--cfg',
+                            help='experiment configure file name',
+                            required=True,
+                            type=str)
+
+        # distributed training
+        parser.add_argument("--local_rank", type=int, default=0)
+        parser.add_argument("--port", type=int, default=9000)
+
+        parser.add_argument('opts',
+                            help="Modify config options using the command-line",
+                            default=None,
+                            nargs=argparse.REMAINDER)
+
+        args = parser.parse_args()
+
+        return args
+    
+    args = parse_args()
+    update_config(config, args)
+    model = build_model(config)
+    input_data = torch.rand(7,3,224,224)
+    output_data = model(input_data)
