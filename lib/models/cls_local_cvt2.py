@@ -22,7 +22,7 @@ try:
 except:
     from lib.models.registry import register_model
 
-DEBUG = True
+DEBUG = False
 
 # From PyTorch internals
 def _ntuple(n):
@@ -506,7 +506,7 @@ class Block(nn.Module):
         if DEBUG:
             print('    h, w', h, w)
         x = rearrange(x, 'b (h w) c -> b c h w', h=h, w=w)
-        # x = x + self.conv(x)
+        # x = x + self.conv(x) # 这里干掉了残差
         x = self.conv(x)
         x = rearrange(x, 'b c h w -> b (h w) c')
 
