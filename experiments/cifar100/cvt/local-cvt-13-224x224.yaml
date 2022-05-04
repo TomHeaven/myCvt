@@ -6,6 +6,7 @@ AMP:
 
 MODEL:
   NAME: cls_local_cvt
+  # PRETRAINED: 'weights/CvT-13-224x224-IN-1k.pth' 
   SPEC:
     INIT: 'trunc_norm'
     NUM_STAGES: 3
