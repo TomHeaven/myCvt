@@ -171,6 +171,11 @@ def main():
         else:
             lr = lr_scheduler.get_last_lr()[0]
         logging.info(f'=> lr: {lr}')
+        
+        if writer_dict and comm.is_main_process():
+            writer = writer_dict['writer']
+            global_steps = writer_dict['train_global_steps']
+            writer.add_scalar('lr', lr, global_steps)
 
         save_checkpoint_on_master(
             model=model,
